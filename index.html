@@ -53,6 +53,7 @@
     vr-mode-ui="enabled: false"
   >
 
+    <!-- 歩行者信号：hiroマーカー -->
     <a-marker preset="hiro">
       <a-image
         src="signal.svg"
@@ -62,7 +63,7 @@
         animation__stretch="property: rotation; from: 0 0 -20; to: 0 0 20; dur: 700; easing: easeInOutSine; loop: true; dir: alternate"
       ></a-image>
       <a-text
-        value="立ちっぱで疲れるわ！\nちょっと伸ばそ。"
+        value="立ちっぱで\n疲れるわ！\nちょっと伸ばそ。"
         position="0.8 2 0"
         color="#ffffff"
         width="3.5"
@@ -70,7 +71,8 @@
       ></a-text>
     </a-marker>
 
-    <a-marker preset="kanji">
+    <!-- 非常口：letterAマーカー -->
+    <a-marker preset="letterA">
       <a-image
         src="exit.svg"
         width="1.2"
@@ -80,7 +82,7 @@
         animation__tilt="property: rotation; from: 0 0 -12; to: 0 0 12; dur: 350; easing: easeInOutSine; loop: true; dir: alternate"
       ></a-image>
       <a-text
-        value="ちょっとストレッチ\nしていこ！"
+        value="ちょっと\nストレッチ\nしていこ！"
         position="0.8 2 0"
         color="#ffffff"
         width="3.5"
