@@ -7,6 +7,8 @@
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.3.3/aframe/build/aframe-ar.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.5/dist/teachablemachine-image.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { overflow: hidden; background: black; font-family: 'Helvetica Neue', 'Hiragino Sans', sans-serif; }
@@ -26,10 +28,18 @@
       background: rgba(80,80,80,0.85); color: #ccc;
       border: none; outline: none;
       -webkit-tap-highlight-color: transparent;
+      transition: background 0.3s;
     }
     #status.found { background: rgba(0,180,80,0.95); color: white; }
 
-    /* オーバーレイ */
+    #confidence {
+      position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+      font-size: 13px; color: white;
+      background: rgba(0,0,0,0.5); padding: 6px 16px;
+      border-radius: 12px; z-index: 9999; pointer-events: none;
+      white-space: nowrap;
+    }
+
     #exercise-overlay {
       display: none;
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -50,18 +60,17 @@
       max-width: 360px;
       text-align: center;
     }
-
     .acquired-badge {
       background: #ff6b35;
       color: white;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: bold;
       padding: 6px 16px;
       border-radius: 20px;
       display: inline-block;
       margin-bottom: 16px;
+      line-height: 1.5;
     }
-
     .exercise-name {
       font-size: 20px;
       font-weight: bold;
@@ -73,30 +82,17 @@
       color: #888;
       margin-bottom: 16px;
     }
-
-    /* GLBをcanvasで表示する代わりにモデルビューア風のコンテナ */
     .model-area {
-      position: relative;
       background: #e8f5e9;
       border-radius: 16px;
-      height: 160px;
-      margin-bottom: 0;
+      height: 150px;
+      margin-bottom: 16px;
       display: flex;
-      align-items: flex-end;
+      align-items: center;
       justify-content: center;
-      overflow: visible;
+      font-size: 80px;
     }
-
-    .model-figure {
-      font-size: 100px;
-      line-height: 1;
-      margin-bottom: -8px;
-      filter: hue-rotate(90deg) saturate(2);
-    }
-
-    /* 吹き出し */
     .speech-bubble {
-      position: relative;
       background: #00c853;
       color: white;
       border-radius: 16px;
@@ -104,18 +100,9 @@
       font-size: 14px;
       font-weight: bold;
       line-height: 1.7;
-      margin: 20px 0 16px;
+      margin-bottom: 16px;
       text-align: left;
     }
-    .speech-bubble::before {
-      content: '';
-      position: absolute;
-      bottom: -14px;
-      left: 40px;
-      border: 7px solid transparent;
-      border-top-color: #00c853;
-    }
-
     .close-btn {
       background: #eeeeee;
       color: #333;
@@ -126,27 +113,55 @@
       font-weight: bold;
       cursor: pointer;
       width: 100%;
-      margin-top: 8px;
       -webkit-tap-highlight-color: transparent;
     }
   </style>
   <script>
-    AFRAME.registerComponent('marker-status', {
-      schema: { name: { type: 'string', default: 'マーカー' } },
-      init: function () {
-        var el = this.el;
-        var name = this.data.name;
-        var statusEl = document.getElementById('status');
-        el.addEventListener('markerFound', function () {
-          statusEl.textContent = '✅ ' + name + ' 認識中　→　タップ';
-          statusEl.className = 'found';
-        });
-        el.addEventListener('markerLost', function () {
-          statusEl.textContent = '🔍 マーカーを探しています…';
-          statusEl.className = '';
-        });
+    const MODEL_URL = 'https://teachablemachine.withgoogle.com/models/x5wEdZGP7/';
+    let model, webcamEl, isRunning = false;
+    let exitDetected = false;
+
+    async function initTM() {
+      const modelURL = MODEL_URL + 'model.json';
+      const metadataURL = MODEL_URL + 'metadata.json';
+      model = await tmImage.load(modelURL, metadataURL);
+
+      // カメラ映像をa-sceneのvideoから取得
+      await predict();
+    }
+
+    async function predict() {
+      if (!model) return;
+
+      // a-sceneのvideo要素を取得
+      const video = document.querySelector('video');
+      if (!video || video.readyState < 2) {
+        setTimeout(predict, 500);
+        return;
       }
-    });
+
+      const prediction = await model.predict(video);
+      const exitClass = prediction.find(p => p.className === 'Class 1' || p.className.includes('exit') || p.className.includes('Exit'));
+      const confidence = exitClass ? exitClass.probability : prediction[0].probability;
+      const label = exitClass ? exitClass.className : prediction[0].className;
+
+      document.getElementById('confidence').textContent =
+        `認識: ${label} (${Math.round(confidence * 100)}%)`;
+
+      if (exitClass && exitClass.probability > 0.7) {
+        exitDetected = true;
+        const statusEl = document.getElementById('status');
+        statusEl.textContent = '✅ 非常口 認識中　→　タップ';
+        statusEl.className = 'found';
+      } else {
+        exitDetected = false;
+        const statusEl = document.getElementById('status');
+        statusEl.textContent = '🔍 非常口にカメラを向けてください';
+        statusEl.className = '';
+      }
+
+      setTimeout(predict, 500);
+    }
 
     function openOverlay() {
       document.getElementById('exercise-overlay').classList.add('active');
@@ -154,61 +169,36 @@
     function closeOverlay() {
       document.getElementById('exercise-overlay').classList.remove('active');
     }
+
+    window.addEventListener('load', () => {
+      // a-sceneのカメラ起動後にTM初期化
+      setTimeout(initTM, 3000);
+    });
   </script>
 </head>
 <body>
   <div id="title">XR エクササイズ</div>
+  <div id="confidence">モデル読み込み中...</div>
 
   <button id="status" ontouchend="openOverlay()" onclick="openOverlay()">
-    🔍 マーカーにカメラを向けてください
+    🔍 非常口にカメラを向けてください
   </button>
 
-  <!-- オーバーレイ -->
   <div id="exercise-overlay">
     <div class="exercise-card">
-
       <div class="acquired-badge">🎉 エクササイズ01：非常口の退勤後　を採取しました！</div>
-
       <div class="exercise-name">ベントニーシットアップ</div>
       <div class="exercise-name-en">Bent Knee Sit-Up</div>
-
-      <!-- モデル表示エリア（3Dモデルをインラインで表示） -->
-      <div class="model-area">
-        <a-scene
-          embedded
-          style="width:100%;height:160px;border-radius:16px;"
-          vr-mode-ui="enabled:false"
-          arjs="false"
-          renderer="antialias:true"
-        >
-          <a-assets>
-            <a-asset-item id="char2" src="character.glb"></a-asset-item>
-          </a-assets>
-          <a-entity
-            gltf-model="#char2"
-            scale="0.8 0.8 0.8"
-            position="0 -0.5 -2"
-            rotation="0 0 0"
-            animation-mixer="loop:repeat"
-          ></a-entity>
-          <a-light type="ambient" color="#ffffff" intensity="1.5"></a-light>
-          <a-light type="directional" position="1 2 1" intensity="1"></a-light>
-          <a-camera position="0 1 0" look-controls="enabled:false" wasd-controls="enabled:false"></a-camera>
-        </a-scene>
-      </div>
-
+      <div class="model-area">🏃</div>
       <div class="speech-bubble">
         あの姿勢をずっと続けるために、<br>体幹を鍛えております。
       </div>
-
       <button class="close-btn" ontouchend="closeOverlay()" onclick="closeOverlay()">
         閉じる
       </button>
-
     </div>
   </div>
 
-  <!-- メインAR -->
   <a-scene
     embedded
     arjs="sourceType: webcam; debugUIEnabled: false;"
@@ -219,17 +209,7 @@
       <a-asset-item id="character" src="character.glb"></a-asset-item>
     </a-assets>
 
-    <a-marker preset="hiro" marker-status="name: 歩行者信号">
-      <a-entity
-        gltf-model="#character"
-        scale="3 3 3"
-        position="0 4 0"
-        rotation="0 0 0"
-        animation-mixer="loop: repeat"
-      ></a-entity>
-    </a-marker>
-
-    <a-marker type="pattern" url="exit.patt" marker-status="name: 非常口">
+    <a-marker preset="hiro">
       <a-entity
         gltf-model="#character"
         scale="3 3 3"
