@@ -8,7 +8,8 @@
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.3.3/aframe/build/aframe-ar.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
   <style>
-    body { margin: 0; overflow: hidden; background: black; font-family: 'Helvetica Neue', sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { overflow: hidden; background: black; font-family: 'Helvetica Neue', 'Hiragino Sans', sans-serif; }
 
     #title {
       position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
@@ -19,71 +20,114 @@
 
     #status {
       position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-      font-size: 16px; font-weight: bold; text-align: center;
+      font-size: 15px; font-weight: bold; text-align: center;
       padding: 12px 24px; border-radius: 20px; z-index: 9999;
       white-space: nowrap; cursor: pointer;
       background: rgba(80,80,80,0.85); color: #ccc;
-      transition: background 0.3s;
       border: none; outline: none;
       -webkit-tap-highlight-color: transparent;
     }
-    #status.found {
-      background: rgba(0,180,80,0.95); color: white;
-    }
+    #status.found { background: rgba(0,180,80,0.95); color: white; }
 
+    /* オーバーレイ */
     #exercise-overlay {
       display: none;
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.80);
+      background: rgba(0,0,0,0.85);
       z-index: 10000;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 24px;
-      box-sizing: border-box;
+      padding: 20px;
     }
-    #exercise-overlay.active {
-      display: flex;
-    }
+    #exercise-overlay.active { display: flex; }
+
     .exercise-card {
       background: white;
       border-radius: 24px;
-      padding: 32px 24px;
+      padding: 24px 20px;
       width: 100%;
       max-width: 360px;
       text-align: center;
     }
+
+    .acquired-badge {
+      background: #ff6b35;
+      color: white;
+      font-size: 13px;
+      font-weight: bold;
+      padding: 6px 16px;
+      border-radius: 20px;
+      display: inline-block;
+      margin-bottom: 16px;
+    }
+
     .exercise-name {
-      font-size: 24px;
+      font-size: 20px;
       font-weight: bold;
       color: #1a1a1a;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
     .exercise-name-en {
-      font-size: 13px;
+      font-size: 12px;
       color: #888;
-      margin-bottom: 24px;
+      margin-bottom: 16px;
     }
+
+    /* GLBをcanvasで表示する代わりにモデルビューア風のコンテナ */
+    .model-area {
+      position: relative;
+      background: #e8f5e9;
+      border-radius: 16px;
+      height: 160px;
+      margin-bottom: 0;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      overflow: visible;
+    }
+
+    .model-figure {
+      font-size: 100px;
+      line-height: 1;
+      margin-bottom: -8px;
+      filter: hue-rotate(90deg) saturate(2);
+    }
+
+    /* 吹き出し */
     .speech-bubble {
+      position: relative;
       background: #00c853;
       color: white;
       border-radius: 16px;
-      padding: 16px 20px;
-      font-size: 17px;
+      padding: 14px 18px;
+      font-size: 14px;
       font-weight: bold;
       line-height: 1.7;
-      margin-bottom: 32px;
+      margin: 20px 0 16px;
+      text-align: left;
     }
+    .speech-bubble::before {
+      content: '';
+      position: absolute;
+      bottom: -14px;
+      left: 40px;
+      border: 7px solid transparent;
+      border-top-color: #00c853;
+    }
+
     .close-btn {
       background: #eeeeee;
       color: #333;
       border: none;
       border-radius: 12px;
-      padding: 14px 40px;
-      font-size: 16px;
+      padding: 14px 0;
+      font-size: 15px;
       font-weight: bold;
       cursor: pointer;
       width: 100%;
+      margin-top: 8px;
+      -webkit-tap-highlight-color: transparent;
     }
   </style>
   <script>
@@ -107,7 +151,6 @@
     function openOverlay() {
       document.getElementById('exercise-overlay').classList.add('active');
     }
-
     function closeOverlay() {
       document.getElementById('exercise-overlay').classList.remove('active');
     }
@@ -120,21 +163,52 @@
     🔍 マーカーにカメラを向けてください
   </button>
 
+  <!-- オーバーレイ -->
   <div id="exercise-overlay">
     <div class="exercise-card">
+
+      <div class="acquired-badge">🎉 エクササイズ01：非常口の退勤後　を採取しました！</div>
+
       <div class="exercise-name">ベントニーシットアップ</div>
       <div class="exercise-name-en">Bent Knee Sit-Up</div>
-      <div class="speech-bubble">
-        ちょっとそこのあなた、<br>
-        隙間時間に腹筋どうですか？<br>
-        膝を曲げて、ゆっくり起き上がる！
+
+      <!-- モデル表示エリア（3Dモデルをインラインで表示） -->
+      <div class="model-area">
+        <a-scene
+          embedded
+          style="width:100%;height:160px;border-radius:16px;"
+          vr-mode-ui="enabled:false"
+          arjs="false"
+          renderer="antialias:true"
+        >
+          <a-assets>
+            <a-asset-item id="char2" src="character.glb"></a-asset-item>
+          </a-assets>
+          <a-entity
+            gltf-model="#char2"
+            scale="0.8 0.8 0.8"
+            position="0 -0.5 -2"
+            rotation="0 0 0"
+            animation-mixer="loop:repeat"
+          ></a-entity>
+          <a-light type="ambient" color="#ffffff" intensity="1.5"></a-light>
+          <a-light type="directional" position="1 2 1" intensity="1"></a-light>
+          <a-camera position="0 1 0" look-controls="enabled:false" wasd-controls="enabled:false"></a-camera>
+        </a-scene>
       </div>
+
+      <div class="speech-bubble">
+        あの姿勢をずっと続けるために、<br>体幹を鍛えております。
+      </div>
+
       <button class="close-btn" ontouchend="closeOverlay()" onclick="closeOverlay()">
         閉じる
       </button>
+
     </div>
   </div>
 
+  <!-- メインAR -->
   <a-scene
     embedded
     arjs="sourceType: webcam; debugUIEnabled: false;"
