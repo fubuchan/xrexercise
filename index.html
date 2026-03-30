@@ -6,13 +6,11 @@
   <title>XRエクササイズ</title>
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.3.3/aframe/build/aframe-ar.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.5/dist/teachablemachine-image.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { overflow: hidden; background: black; font-family: 'Helvetica Neue', 'Hiragino Sans', sans-serif; }
-
     #title {
       position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
       color: white; font-size: 18px; font-weight: bold;
@@ -28,27 +26,12 @@
       border: none; outline: none; transition: background 0.3s;
     }
     #status.found { background: rgba(0,180,80,0.95); color: white; }
-
     #confidence {
       position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
       font-size: 13px; color: white;
       background: rgba(0,0,0,0.5); padding: 6px 16px;
       border-radius: 12px; z-index: 9999; pointer-events: none; white-space: nowrap;
     }
-
-    /* AR上のGLBモデル（a-frameのエンティティをDOMで制御） */
-    #ar-character {
-      display: none;
-      position: fixed;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -60%);
-      z-index: 500;
-      pointer-events: none;
-      width: 1px; height: 1px;
-    }
-    #ar-character.active { display: block; }
-
-    /* オーバーレイ */
     #exercise-overlay {
       display: none;
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -60,7 +43,6 @@
       padding: 20px;
     }
     #exercise-overlay.active { display: flex; }
-
     .exercise-card {
       background: white; border-radius: 24px;
       padding: 24px 20px; width: 100%; max-width: 360px; text-align: center;
@@ -72,14 +54,10 @@
     }
     .exercise-name { font-size: 20px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px; }
     .exercise-name-en { font-size: 12px; color: #888; margin-bottom: 12px; }
-
     .overlay-model-wrap {
       background: #e8f5e9; border-radius: 16px;
-      height: 180px; margin-bottom: 16px;
-      display: flex; align-items: center; justify-content: center;
-      overflow: hidden; position: relative;
+      height: 180px; margin-bottom: 16px; overflow: hidden;
     }
-
     .speech-bubble {
       background: #00c853; color: white; border-radius: 16px;
       padding: 14px 18px; font-size: 14px; font-weight: bold;
@@ -92,16 +70,39 @@
     }
   </style>
   <script>
+    // animation-mixerをaframe-extrasなしで実装
+    AFRAME.registerComponent('anim-mixer', {
+      init: function () {
+        var el = this.el;
+        el.addEventListener('model-loaded', function (e) {
+          var model = e.detail.model;
+          var animations = e.detail.format === 'gltf' ?
+            el.getObject3D('mesh').animations || [] : [];
+          // gltf-modelから直接取得
+          var obj = el.getObject3D('mesh');
+          if (!obj) return;
+          var clips = obj.animations;
+          if (!clips || clips.length === 0) return;
+          var mixer = new THREE.AnimationMixer(obj);
+          mixer.clipAction(clips[0]).play();
+          el.mixer = mixer;
+        });
+      },
+      tick: function (t, dt) {
+        if (this.el.mixer) this.el.mixer.update(dt / 1000);
+      }
+    });
+
     const MODEL_URL = 'https://teachablemachine.withgoogle.com/models/x5wEdZGP7/';
     let tmModel;
 
     async function initTM() {
       try {
         tmModel = await tmImage.load(MODEL_URL + 'model.json', MODEL_URL + 'metadata.json');
-        document.getElementById('confidence').textContent = '準備完了 - 非常口にカメラを向けてください';
+        document.getElementById('confidence').textContent = '準備完了';
         predict();
       } catch(e) {
-        document.getElementById('confidence').textContent = 'モデル読み込みエラー: ' + e.message;
+        document.getElementById('confidence').textContent = 'エラー: ' + e.message;
       }
     }
 
@@ -116,18 +117,15 @@
         document.getElementById('confidence').textContent =
           `${top.className}: ${Math.round(top.probability * 100)}%`;
         const statusEl = document.getElementById('status');
-        const arChar = document.getElementById('ar-character');
         const arEntity = document.getElementById('ar-entity');
         if (isExit) {
           statusEl.textContent = '✅ 非常口 認識中　→　タップ';
           statusEl.className = 'found';
-          arChar.classList.add('active');
-          if (arEntity) arEntity.setAttribute('visible', true);
+          if (arEntity) arEntity.setAttribute('visible', 'true');
         } else {
           statusEl.textContent = '🔍 非常口にカメラを向けてください';
           statusEl.className = '';
-          arChar.classList.remove('active');
-          if (arEntity) arEntity.setAttribute('visible', false);
+          if (arEntity) arEntity.setAttribute('visible', 'false');
         }
       } catch(e) {}
       setTimeout(predict, 500);
@@ -135,9 +133,6 @@
 
     function openOverlay() {
       document.getElementById('exercise-overlay').classList.add('active');
-      // オーバーレイ内のモデルを表示
-      const overlayEntity = document.getElementById('overlay-entity');
-      if (overlayEntity) overlayEntity.setAttribute('visible', true);
     }
     function closeOverlay() {
       document.getElementById('exercise-overlay').classList.remove('active');
@@ -163,40 +158,30 @@
       <div class="exercise-name">ベントニーシットアップ</div>
       <div class="exercise-name-en">Bent Knee Sit-Up</div>
       <div class="overlay-model-wrap">
-        <!-- A-FrameのエンティティをCSSで位置調整 -->
-        <div style="width:100%;height:180px;position:relative;overflow:hidden;">
-          <a-scene
-            embedded
-            vr-mode-ui="enabled:false"
-            style="width:100%;height:180px;position:absolute;top:0;left:0;"
-            renderer="antialias:true"
-          >
-            <a-assets>
-              <a-asset-item id="char-ol" src="character.glb"></a-asset-item>
-            </a-assets>
-            <a-entity
-              id="overlay-entity"
-              gltf-model="#char-ol"
-              scale="0.7 0.7 0.7"
-              position="0 -0.3 -2"
-              animation-mixer="loop:repeat"
-            ></a-entity>
-            <a-light type="ambient" intensity="2"></a-light>
-            <a-light type="directional" position="1 2 1" intensity="1"></a-light>
-            <a-camera
-              position="0 1 0"
-              look-controls="enabled:false"
-              wasd-controls="enabled:false"
-            ></a-camera>
-          </a-scene>
-        </div>
+        <a-scene
+          embedded
+          vr-mode-ui="enabled:false"
+          style="width:100%;height:180px;"
+          renderer="antialias:true"
+        >
+          <a-assets>
+            <a-asset-item id="char-ol" src="character.glb"></a-asset-item>
+          </a-assets>
+          <a-entity
+            gltf-model="#char-ol"
+            scale="0.7 0.7 0.7"
+            position="0 -0.3 -2"
+            anim-mixer
+          ></a-entity>
+          <a-light type="ambient" intensity="2"></a-light>
+          <a-light type="directional" position="1 2 1" intensity="1"></a-light>
+          <a-camera position="0 1 0" look-controls="enabled:false" wasd-controls="enabled:false"></a-camera>
+        </a-scene>
       </div>
       <div class="speech-bubble">
         あの姿勢をずっと続けるために、<br>体幹を鍛えております。
       </div>
-      <button class="close-btn" ontouchend="closeOverlay()" onclick="closeOverlay()">
-        閉じる
-      </button>
+      <button class="close-btn" ontouchend="closeOverlay()" onclick="closeOverlay()">閉じる</button>
     </div>
   </div>
 
@@ -210,17 +195,14 @@
     <a-assets>
       <a-asset-item id="character" src="character.glb"></a-asset-item>
     </a-assets>
-
-    <!-- 認識中に表示するモデル（カメラ前方固定） -->
     <a-entity
       id="ar-entity"
       gltf-model="#character"
       scale="1.5 1.5 1.5"
       position="0 0 -4"
       visible="false"
-      animation-mixer="loop:repeat"
+      anim-mixer
     ></a-entity>
-
     <a-entity camera></a-entity>
   </a-scene>
 </body>
