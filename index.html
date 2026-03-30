@@ -37,9 +37,9 @@
       z-index: 999;
       pointer-events: none;
       white-space: nowrap;
-      transition: background 0.3s, color 0.3s;
       background: rgba(80,80,80,0.85);
       color: #ccc;
+      transition: background 0.3s;
     }
     #status.found {
       background: rgba(0,180,80,0.95);
@@ -78,16 +78,16 @@
 
     <!-- 歩行者信号：hiroマーカー -->
     <a-marker preset="hiro" marker-status="name: 歩行者信号">
-      <a-image
-        src="signal.svg"
-        width="1.2"
-        height="2"
-        position="0 1 0"
-        animation__stretch="property: rotation; from: 0 0 -20; to: 0 0 20; dur: 700; easing: easeInOutSine; loop: true; dir: alternate"
-      ></a-image>
+      <a-entity
+        gltf-model="character.glb"
+        scale="0.008 0.008 0.008"
+        position="0 0 0"
+        rotation="-90 0 0"
+        animation-mixer="loop: repeat"
+      ></a-entity>
       <a-text
         value="立ちっぱで\n疲れるわ！\nちょっと伸ばそ。"
-        position="0.8 2 0"
+        position="0.8 1.5 0"
         color="#ffffff"
         width="3.5"
         align="left"
@@ -100,17 +100,16 @@
       url="exit.patt"
       marker-status="name: 非常口"
     >
-      <a-image
-        src="exit.svg"
-        width="1.2"
-        height="2"
-        position="0 1 0"
-        animation__run="property: position; from: -0.2 1 0; to: 0.2 1 0; dur: 350; easing: easeInOutSine; loop: true; dir: alternate"
-        animation__tilt="property: rotation; from: 0 0 -12; to: 0 0 12; dur: 350; easing: easeInOutSine; loop: true; dir: alternate"
-      ></a-image>
+      <a-entity
+        gltf-model="character.glb"
+        scale="0.008 0.008 0.008"
+        position="0 0 0"
+        rotation="-90 0 0"
+        animation-mixer="loop: repeat"
+      ></a-entity>
       <a-text
         value="ちょっと\nストレッチ\nしていこ！"
-        position="0.8 2 0"
+        position="0.8 1.5 0"
         color="#ffffff"
         width="3.5"
         align="left"
