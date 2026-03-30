@@ -79,25 +79,23 @@
       <a-asset-item id="character" src="character.glb"></a-asset-item>
     </a-assets>
 
-    <!-- 歩行者信号：hiroマーカー -->
     <a-marker preset="hiro" marker-status="name: 歩行者信号">
       <a-entity
         gltf-model="#character"
-        scale="0.01 0.01 0.01"
-        position="0 0.5 0"
+        scale="0.5 0.5 0.5"
+        position="0 1 0"
         rotation="0 0 0"
         animation-mixer="loop: repeat"
       ></a-entity>
       <a-text
         value="立ちっぱで\n疲れるわ！\nちょっと伸ばそ。"
-        position="0.8 1.5 0"
+        position="1.5 2 0"
         color="#ffffff"
-        width="3.5"
+        width="4"
         align="left"
       ></a-text>
     </a-marker>
 
-    <!-- 非常口：カスタムマーカー -->
     <a-marker
       type="pattern"
       url="exit.patt"
@@ -105,16 +103,16 @@
     >
       <a-entity
         gltf-model="#character"
-        scale="0.01 0.01 0.01"
-        position="0 0.5 0"
+        scale="0.5 0.5 0.5"
+        position="0 1 0"
         rotation="0 0 0"
         animation-mixer="loop: repeat"
       ></a-entity>
       <a-text
         value="ちょっと\nストレッチ\nしていこ！"
-        position="0.8 1.5 0"
+        position="1.5 2 0"
         color="#ffffff"
-        width="3.5"
+        width="4"
         align="left"
       ></a-text>
     </a-marker>
