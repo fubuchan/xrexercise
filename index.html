@@ -45,29 +45,21 @@
       background: rgba(0,180,80,0.95);
       color: white;
     }
-    #status.lost {
-      background: rgba(80,80,80,0.85);
-      color: #ccc;
-    }
   </style>
-
   <script>
-    // マーカー認識状態をUIに反映
     AFRAME.registerComponent('marker-status', {
       schema: { name: { type: 'string', default: 'マーカー' } },
       init: function () {
         var el = this.el;
         var name = this.data.name;
         var statusEl = document.getElementById('status');
-
         el.addEventListener('markerFound', function () {
           statusEl.textContent = '✅ ' + name + ' 認識中';
           statusEl.className = 'found';
         });
-
         el.addEventListener('markerLost', function () {
           statusEl.textContent = '🔍 マーカーを探しています…';
-          statusEl.className = 'lost';
+          statusEl.className = '';
         });
       }
     });
@@ -75,7 +67,7 @@
 </head>
 <body>
   <div id="title">XR エクササイズ</div>
-  <div id="status" class="lost">🔍 マーカーにカメラを向けてください</div>
+  <div id="status">🔍 マーカーにカメラを向けてください</div>
 
   <a-scene
     embedded
@@ -102,8 +94,12 @@
       ></a-text>
     </a-marker>
 
-    <!-- 非常口：letterAマーカー -->
-    <a-marker preset="letterA" marker-status="name: 非常口">
+    <!-- 非常口：カスタムマーカー -->
+    <a-marker
+      type="pattern"
+      url="exit.patt"
+      marker-status="name: 非常口"
+    >
       <a-image
         src="exit.svg"
         width="1.2"
