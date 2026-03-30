@@ -8,21 +8,6 @@
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.3.3/aframe/build/aframe-ar.js"></script>
   <style>
     body { margin: 0; overflow: hidden; background: black; font-family: 'Helvetica Neue', sans-serif; }
-    #ui {
-      position: fixed;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: white;
-      font-size: 14px;
-      text-align: center;
-      background: rgba(0,0,0,0.6);
-      padding: 10px 20px;
-      border-radius: 20px;
-      z-index: 999;
-      pointer-events: none;
-      white-space: nowrap;
-    }
     #title {
       position: fixed;
       top: 20px;
@@ -37,14 +22,60 @@
       border-radius: 20px;
       z-index: 999;
       pointer-events: none;
-      letter-spacing: 0.05em;
       white-space: nowrap;
     }
+    #status {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+      padding: 12px 24px;
+      border-radius: 20px;
+      z-index: 999;
+      pointer-events: none;
+      white-space: nowrap;
+      transition: background 0.3s, color 0.3s;
+      background: rgba(80,80,80,0.85);
+      color: #ccc;
+    }
+    #status.found {
+      background: rgba(0,180,80,0.95);
+      color: white;
+    }
+    #status.lost {
+      background: rgba(80,80,80,0.85);
+      color: #ccc;
+    }
   </style>
+
+  <script>
+    // マーカー認識状態をUIに反映
+    AFRAME.registerComponent('marker-status', {
+      schema: { name: { type: 'string', default: 'マーカー' } },
+      init: function () {
+        var el = this.el;
+        var name = this.data.name;
+        var statusEl = document.getElementById('status');
+
+        el.addEventListener('markerFound', function () {
+          statusEl.textContent = '✅ ' + name + ' 認識中';
+          statusEl.className = 'found';
+        });
+
+        el.addEventListener('markerLost', function () {
+          statusEl.textContent = '🔍 マーカーを探しています…';
+          statusEl.className = 'lost';
+        });
+      }
+    });
+  </script>
 </head>
 <body>
   <div id="title">XR エクササイズ</div>
-  <div id="ui">マーカーにカメラを向けてください</div>
+  <div id="status" class="lost">🔍 マーカーにカメラを向けてください</div>
 
   <a-scene
     embedded
@@ -54,7 +85,7 @@
   >
 
     <!-- 歩行者信号：hiroマーカー -->
-    <a-marker preset="hiro">
+    <a-marker preset="hiro" marker-status="name: 歩行者信号">
       <a-image
         src="signal.svg"
         width="1.2"
@@ -72,7 +103,7 @@
     </a-marker>
 
     <!-- 非常口：letterAマーカー -->
-    <a-marker preset="letterA">
+    <a-marker preset="letterA" marker-status="name: 非常口">
       <a-image
         src="exit.svg"
         width="1.2"
