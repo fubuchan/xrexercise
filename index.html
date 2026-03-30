@@ -9,8 +9,6 @@
   <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.5/dist/teachablemachine-image.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { overflow: hidden; background: black; font-family: 'Helvetica Neue', 'Hiragino Sans', sans-serif; }
@@ -38,18 +36,17 @@
       border-radius: 12px; z-index: 9999; pointer-events: none; white-space: nowrap;
     }
 
-    /* Three.jsキャンバス（AR上に重ねる） */
-    #three-canvas {
+    /* AR上のGLBモデル（a-frameのエンティティをDOMで制御） */
+    #ar-character {
       display: none;
       position: fixed;
       top: 50%; left: 50%;
-      transform: translate(-50%, -65%);
-      width: 280px; height: 380px;
+      transform: translate(-50%, -60%);
       z-index: 500;
       pointer-events: none;
-      background: transparent;
+      width: 1px; height: 1px;
     }
-    #three-canvas.active { display: block; }
+    #ar-character.active { display: block; }
 
     /* オーバーレイ */
     #exercise-overlay {
@@ -76,12 +73,12 @@
     .exercise-name { font-size: 20px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px; }
     .exercise-name-en { font-size: 12px; color: #888; margin-bottom: 12px; }
 
-    #overlay-canvas-wrap {
+    .overlay-model-wrap {
       background: #e8f5e9; border-radius: 16px;
-      height: 180px; margin-bottom: 16px; overflow: hidden;
+      height: 180px; margin-bottom: 16px;
       display: flex; align-items: center; justify-content: center;
+      overflow: hidden; position: relative;
     }
-    #overlay-canvas { width: 100%; height: 180px; }
 
     .speech-bubble {
       background: #00c853; color: white; border-radius: 16px;
@@ -97,89 +94,14 @@
   <script>
     const MODEL_URL = 'https://teachablemachine.withgoogle.com/models/x5wEdZGP7/';
     let tmModel;
-    let arRenderer, arScene, arCamera, arMixer, arClock;
-    let overlayRenderer, overlayScene, overlayCamera, overlayMixer, overlayClock;
 
-    // Three.jsでGLBを描画（AR上）
-    function initArThree() {
-      const canvas = document.getElementById('three-canvas');
-      arRenderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-      arRenderer.setSize(280, 380);
-      arRenderer.setClearColor(0x000000, 0);
-      arScene = new THREE.Scene();
-      arCamera = new THREE.PerspectiveCamera(45, 280/380, 0.1, 100);
-      arCamera.position.set(0, 1, 4);
-      arScene.add(new THREE.AmbientLight(0xffffff, 2));
-      const dLight = new THREE.DirectionalLight(0xffffff, 1);
-      dLight.position.set(1, 2, 2);
-      arScene.add(dLight);
-      arClock = new THREE.Clock();
-
-      const loader = new THREE.GLTFLoader();
-      loader.load('character.glb', (gltf) => {
-        const model = gltf.scene;
-        model.scale.set(0.6, 0.6, 0.6);
-        model.position.set(0, -1, 0);
-        arScene.add(model);
-        if (gltf.animations.length > 0) {
-          arMixer = new THREE.AnimationMixer(model);
-          arMixer.clipAction(gltf.animations[0]).play();
-        }
-      });
-
-      animateAr();
-    }
-
-    function animateAr() {
-      requestAnimationFrame(animateAr);
-      if (arMixer) arMixer.update(arClock.getDelta());
-      arRenderer.render(arScene, arCamera);
-    }
-
-    // Three.jsでGLBを描画（オーバーレイ内）
-    function initOverlayThree() {
-      const canvas = document.getElementById('overlay-canvas');
-      overlayRenderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-      overlayRenderer.setSize(320, 180);
-      overlayRenderer.setClearColor(0xe8f5e9);
-      overlayScene = new THREE.Scene();
-      overlayCamera = new THREE.PerspectiveCamera(45, 320/180, 0.1, 100);
-      overlayCamera.position.set(0, 1, 4);
-      overlayScene.add(new THREE.AmbientLight(0xffffff, 2));
-      const dLight = new THREE.DirectionalLight(0xffffff, 1);
-      dLight.position.set(1, 2, 2);
-      overlayScene.add(dLight);
-      overlayClock = new THREE.Clock();
-
-      const loader = new THREE.GLTFLoader();
-      loader.load('character.glb', (gltf) => {
-        const model = gltf.scene;
-        model.scale.set(0.4, 0.4, 0.4);
-        model.position.set(0, -0.8, 0);
-        overlayScene.add(model);
-        if (gltf.animations.length > 0) {
-          overlayMixer = new THREE.AnimationMixer(model);
-          overlayMixer.clipAction(gltf.animations[0]).play();
-        }
-      });
-
-      animateOverlay();
-    }
-
-    function animateOverlay() {
-      requestAnimationFrame(animateOverlay);
-      if (overlayMixer) overlayMixer.update(overlayClock.getDelta());
-      overlayRenderer.render(overlayScene, overlayCamera);
-    }
-
-    // Teachable Machine
     async function initTM() {
       try {
         tmModel = await tmImage.load(MODEL_URL + 'model.json', MODEL_URL + 'metadata.json');
         document.getElementById('confidence').textContent = '準備完了 - 非常口にカメラを向けてください';
         predict();
       } catch(e) {
-        document.getElementById('confidence').textContent = 'モデル読み込みエラー';
+        document.getElementById('confidence').textContent = 'モデル読み込みエラー: ' + e.message;
       }
     }
 
@@ -194,15 +116,18 @@
         document.getElementById('confidence').textContent =
           `${top.className}: ${Math.round(top.probability * 100)}%`;
         const statusEl = document.getElementById('status');
-        const canvas = document.getElementById('three-canvas');
+        const arChar = document.getElementById('ar-character');
+        const arEntity = document.getElementById('ar-entity');
         if (isExit) {
           statusEl.textContent = '✅ 非常口 認識中　→　タップ';
           statusEl.className = 'found';
-          canvas.classList.add('active');
+          arChar.classList.add('active');
+          if (arEntity) arEntity.setAttribute('visible', true);
         } else {
           statusEl.textContent = '🔍 非常口にカメラを向けてください';
           statusEl.className = '';
-          canvas.classList.remove('active');
+          arChar.classList.remove('active');
+          if (arEntity) arEntity.setAttribute('visible', false);
         }
       } catch(e) {}
       setTimeout(predict, 500);
@@ -210,14 +135,15 @@
 
     function openOverlay() {
       document.getElementById('exercise-overlay').classList.add('active');
+      // オーバーレイ内のモデルを表示
+      const overlayEntity = document.getElementById('overlay-entity');
+      if (overlayEntity) overlayEntity.setAttribute('visible', true);
     }
     function closeOverlay() {
       document.getElementById('exercise-overlay').classList.remove('active');
     }
 
     window.addEventListener('load', () => {
-      initArThree();
-      initOverlayThree();
       setTimeout(initTM, 3000);
     });
   </script>
@@ -226,19 +152,44 @@
   <div id="title">XR エクササイズ</div>
   <div id="confidence">モデル読み込み中...</div>
 
-  <canvas id="three-canvas"></canvas>
-
   <button id="status" ontouchend="openOverlay()" onclick="openOverlay()">
     🔍 非常口にカメラを向けてください
   </button>
 
+  <!-- オーバーレイ -->
   <div id="exercise-overlay">
     <div class="exercise-card">
       <div class="acquired-badge">🎉 エクササイズ01：非常口の退勤後　を採取しました！</div>
       <div class="exercise-name">ベントニーシットアップ</div>
       <div class="exercise-name-en">Bent Knee Sit-Up</div>
-      <div id="overlay-canvas-wrap">
-        <canvas id="overlay-canvas"></canvas>
+      <div class="overlay-model-wrap">
+        <!-- A-FrameのエンティティをCSSで位置調整 -->
+        <div style="width:100%;height:180px;position:relative;overflow:hidden;">
+          <a-scene
+            embedded
+            vr-mode-ui="enabled:false"
+            style="width:100%;height:180px;position:absolute;top:0;left:0;"
+            renderer="antialias:true"
+          >
+            <a-assets>
+              <a-asset-item id="char-ol" src="character.glb"></a-asset-item>
+            </a-assets>
+            <a-entity
+              id="overlay-entity"
+              gltf-model="#char-ol"
+              scale="0.7 0.7 0.7"
+              position="0 -0.3 -2"
+              animation-mixer="loop:repeat"
+            ></a-entity>
+            <a-light type="ambient" intensity="2"></a-light>
+            <a-light type="directional" position="1 2 1" intensity="1"></a-light>
+            <a-camera
+              position="0 1 0"
+              look-controls="enabled:false"
+              wasd-controls="enabled:false"
+            ></a-camera>
+          </a-scene>
+        </div>
       </div>
       <div class="speech-bubble">
         あの姿勢をずっと続けるために、<br>体幹を鍛えております。
@@ -249,12 +200,27 @@
     </div>
   </div>
 
+  <!-- メインAR -->
   <a-scene
     embedded
     arjs="sourceType: webcam; debugUIEnabled: false;"
     renderer="logarithmicDepthBuffer: true; antialias: true;"
     vr-mode-ui="enabled: false"
   >
+    <a-assets>
+      <a-asset-item id="character" src="character.glb"></a-asset-item>
+    </a-assets>
+
+    <!-- 認識中に表示するモデル（カメラ前方固定） -->
+    <a-entity
+      id="ar-entity"
+      gltf-model="#character"
+      scale="1.5 1.5 1.5"
+      position="0 0 -4"
+      visible="false"
+      animation-mixer="loop:repeat"
+    ></a-entity>
+
     <a-entity camera></a-entity>
   </a-scene>
 </body>
