@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>XRエクササイズ</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.2.0/aframe.min.js"></script>
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.3.3/aframe/build/aframe-ar.js"></script>
   <style>
     body { margin: 0; overflow: hidden; background: black; font-family: 'Helvetica Neue', sans-serif; }
@@ -53,7 +53,6 @@
     vr-mode-ui="enabled: false"
   >
 
-    <!-- 歩行者信号マーカー（Hiro） -->
     <a-marker preset="hiro">
       <a-image
         src="signal.svg"
@@ -71,7 +70,6 @@
       ></a-text>
     </a-marker>
 
-    <!-- 非常口マーカー（kanji） -->
     <a-marker preset="kanji">
       <a-image
         src="exit.svg"
