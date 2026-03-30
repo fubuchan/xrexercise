@@ -10,41 +10,19 @@
   <style>
     body { margin: 0; overflow: hidden; background: black; font-family: 'Helvetica Neue', sans-serif; }
     #title {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: white;
-      font-size: 18px;
-      font-weight: bold;
-      background: rgba(220,60,60,0.9);
-      padding: 8px 24px;
-      border-radius: 20px;
-      z-index: 999;
-      pointer-events: none;
-      white-space: nowrap;
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+      color: white; font-size: 18px; font-weight: bold;
+      background: rgba(220,60,60,0.9); padding: 8px 24px;
+      border-radius: 20px; z-index: 999; pointer-events: none; white-space: nowrap;
     }
     #status {
-      position: fixed;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 16px;
-      font-weight: bold;
-      text-align: center;
-      padding: 12px 24px;
-      border-radius: 20px;
-      z-index: 999;
-      pointer-events: none;
-      white-space: nowrap;
-      background: rgba(80,80,80,0.85);
-      color: #ccc;
-      transition: background 0.3s;
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+      font-size: 16px; font-weight: bold; text-align: center;
+      padding: 12px 24px; border-radius: 20px; z-index: 999;
+      pointer-events: none; white-space: nowrap;
+      background: rgba(80,80,80,0.85); color: #ccc; transition: background 0.3s;
     }
-    #status.found {
-      background: rgba(0,180,80,0.95);
-      color: white;
-    }
+    #status.found { background: rgba(0,180,80,0.95); color: white; }
   </style>
   <script>
     AFRAME.registerComponent('marker-status', {
@@ -79,46 +57,30 @@
       <a-asset-item id="character" src="character.glb"></a-asset-item>
     </a-assets>
 
+    <!-- デバッグ用：認識したら赤いボックスを表示 -->
     <a-marker preset="hiro" marker-status="name: 歩行者信号">
+      <a-box position="0 0.5 0" scale="1 1 1" color="red"></a-box>
       <a-entity
         gltf-model="#character"
         scale="0.5 0.5 0.5"
-        position="0 1 0"
+        position="0 5 0"
         rotation="0 0 0"
         animation-mixer="loop: repeat"
       ></a-entity>
-      <a-text
-        value="立ちっぱで\n疲れるわ！\nちょっと伸ばそ。"
-        position="1.5 2 0"
-        color="#ffffff"
-        width="4"
-        align="left"
-      ></a-text>
     </a-marker>
 
-    <a-marker
-      type="pattern"
-      url="exit.patt"
-      marker-status="name: 非常口"
-    >
+    <a-marker type="pattern" url="exit.patt" marker-status="name: 非常口">
+      <a-box position="0 0.5 0" scale="1 1 1" color="blue"></a-box>
       <a-entity
         gltf-model="#character"
         scale="0.5 0.5 0.5"
-        position="0 1 0"
+        position="0 5 0"
         rotation="0 0 0"
         animation-mixer="loop: repeat"
       ></a-entity>
-      <a-text
-        value="ちょっと\nストレッチ\nしていこ！"
-        position="1.5 2 0"
-        color="#ffffff"
-        width="4"
-        align="left"
-      ></a-text>
     </a-marker>
 
     <a-entity camera></a-entity>
-
   </a-scene>
 </body>
 </html>
