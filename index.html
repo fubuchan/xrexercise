@@ -6,6 +6,7 @@
   <title>XRエクササイズ</title>
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.3.3/aframe/build/aframe-ar.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
   <style>
     body { margin: 0; overflow: hidden; background: black; font-family: 'Helvetica Neue', sans-serif; }
     #title {
@@ -16,7 +17,6 @@
       color: white;
       font-size: 18px;
       font-weight: bold;
-      text-align: center;
       background: rgba(220,60,60,0.9);
       padding: 8px 24px;
       border-radius: 20px;
@@ -75,15 +75,18 @@
     renderer="logarithmicDepthBuffer: true; antialias: true;"
     vr-mode-ui="enabled: false"
   >
+    <a-assets>
+      <a-asset-item id="character" src="character.glb"></a-asset-item>
+    </a-assets>
 
     <!-- 歩行者信号：hiroマーカー -->
     <a-marker preset="hiro" marker-status="name: 歩行者信号">
       <a-entity
-        gltf-model="character.glb"
+        gltf-model="#character"
         scale="0.008 0.008 0.008"
         position="0 0 0"
         rotation="-90 0 0"
-        animation-mixer="loop: repeat"
+        animation-mixer="loop: repeat; clampWhenFinished: false"
       ></a-entity>
       <a-text
         value="立ちっぱで\n疲れるわ！\nちょっと伸ばそ。"
@@ -101,11 +104,11 @@
       marker-status="name: 非常口"
     >
       <a-entity
-        gltf-model="character.glb"
+        gltf-model="#character"
         scale="0.008 0.008 0.008"
         position="0 0 0"
         rotation="-90 0 0"
-        animation-mixer="loop: repeat"
+        animation-mixer="loop: repeat; clampWhenFinished: false"
       ></a-entity>
       <a-text
         value="ちょっと\nストレッチ\nしていこ！"
