@@ -9,43 +9,154 @@
   <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
   <style>
     body { margin: 0; overflow: hidden; background: black; font-family: 'Helvetica Neue', sans-serif; }
+
     #title {
       position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
       color: white; font-size: 18px; font-weight: bold;
       background: rgba(220,60,60,0.9); padding: 8px 24px;
       border-radius: 20px; z-index: 999; pointer-events: none; white-space: nowrap;
     }
+
+    /* 認識ステータスボタン（タップ可能） */
     #status {
       position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
       font-size: 16px; font-weight: bold; text-align: center;
       padding: 12px 24px; border-radius: 20px; z-index: 999;
-      pointer-events: none; white-space: nowrap;
-      background: rgba(80,80,80,0.85); color: #ccc; transition: background 0.3s;
+      white-space: nowrap; cursor: pointer;
+      background: rgba(80,80,80,0.85); color: #ccc;
+      transition: background 0.3s;
+      border: none; outline: none;
     }
-    #status.found { background: rgba(0,180,80,0.95); color: white; }
+    #status.found {
+      background: rgba(0,180,80,0.95); color: white;
+    }
+
+    /* エクササイズオーバーレイ */
+    #exercise-overlay {
+      display: none;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.75);
+      z-index: 1000;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+    #exercise-overlay.active {
+      display: flex;
+    }
+    .exercise-card {
+      background: white;
+      border-radius: 24px;
+      padding: 32px 24px;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+      position: relative;
+    }
+    .exercise-icon {
+      font-size: 64px;
+      margin-bottom: 8px;
+    }
+    .exercise-name {
+      font-size: 22px;
+      font-weight: bold;
+      color: #1a1a1a;
+      margin-bottom: 8px;
+    }
+    .exercise-name-en {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 20px;
+    }
+    .speech-bubble {
+      background: #00c853;
+      color: white;
+      border-radius: 16px;
+      padding: 16px 20px;
+      font-size: 18px;
+      font-weight: bold;
+      line-height: 1.6;
+      margin-bottom: 24px;
+      position: relative;
+    }
+    .speech-bubble::after {
+      content: '';
+      position: absolute;
+      bottom: -16px;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 8px solid transparent;
+      border-top-color: #00c853;
+    }
+    .exit-figure {
+      font-size: 48px;
+      margin-top: 24px;
+      margin-bottom: 16px;
+    }
+    .close-btn {
+      background: #f0f0f0;
+      color: #333;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 32px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 8px;
+    }
   </style>
   <script>
+    var markerFound = false;
+
     AFRAME.registerComponent('marker-status', {
       schema: { name: { type: 'string', default: 'マーカー' } },
       init: function () {
         var el = this.el;
         var name = this.data.name;
         var statusEl = document.getElementById('status');
+
         el.addEventListener('markerFound', function () {
-          statusEl.textContent = '✅ ' + name + ' 認識中';
+          markerFound = true;
+          statusEl.textContent = '✅ ' + name + ' 認識中　→　タップ';
           statusEl.className = 'found';
         });
         el.addEventListener('markerLost', function () {
+          markerFound = false;
           statusEl.textContent = '🔍 マーカーを探しています…';
           statusEl.className = '';
         });
       }
     });
+
+    function onStatusTap() {
+      if (!markerFound) return;
+      document.getElementById('exercise-overlay').classList.add('active');
+    }
+
+    function closeOverlay() {
+      document.getElementById('exercise-overlay').classList.remove('active');
+    }
   </script>
 </head>
 <body>
   <div id="title">XR エクササイズ</div>
-  <div id="status">🔍 マーカーにカメラを向けてください</div>
+  <button id="status" onclick="onStatusTap()">🔍 マーカーにカメラを向けてください</button>
+
+  <!-- エクササイズオーバーレイ -->
+  <div id="exercise-overlay">
+    <div class="exercise-card">
+      <div class="exercise-icon">🏃</div>
+      <div class="exercise-name">ベントニーシットアップ</div>
+      <div class="exercise-name-en">Bent Knee Sit-Up</div>
+      <div class="speech-bubble">
+        ちょっとそこのあなた、<br>隙間時間に腹筋どうですか？<br>膝を曲げて、ゆっくり起き上がる！
+      </div>
+      <div class="exit-figure">🚶</div>
+      <button class="close-btn" onclick="closeOverlay()">閉じる</button>
+    </div>
+  </div>
 
   <a-scene
     embedded
@@ -65,13 +176,6 @@
         rotation="0 0 0"
         animation-mixer="loop: repeat"
       ></a-entity>
-      <a-text
-        value="立ちっぱで\n疲れるわ！\nちょっと伸ばそ。"
-        position="2 5 0"
-        color="#ffffff"
-        width="5"
-        align="left"
-      ></a-text>
     </a-marker>
 
     <a-marker type="pattern" url="exit.patt" marker-status="name: 非常口">
@@ -82,13 +186,6 @@
         rotation="0 0 0"
         animation-mixer="loop: repeat"
       ></a-entity>
-      <a-text
-        value="ちょっと\nストレッチ\nしていこ！"
-        position="2 5 0"
-        color="#ffffff"
-        width="5"
-        align="left"
-      ></a-text>
     </a-marker>
 
     <a-entity camera></a-entity>
