@@ -57,27 +57,38 @@
       <a-asset-item id="character" src="character.glb"></a-asset-item>
     </a-assets>
 
-    <!-- デバッグ用：認識したら赤いボックスを表示 -->
     <a-marker preset="hiro" marker-status="name: 歩行者信号">
-      <a-box position="0 0.5 0" scale="1 1 1" color="red"></a-box>
       <a-entity
         gltf-model="#character"
-        scale="0.5 0.5 0.5"
-        position="0 5 0"
+        scale="1.5 1.5 1.5"
+        position="0 2 0"
         rotation="0 0 0"
         animation-mixer="loop: repeat"
       ></a-entity>
+      <a-text
+        value="立ちっぱで\n疲れるわ！\nちょっと伸ばそ。"
+        position="2 3 0"
+        color="#ffffff"
+        width="5"
+        align="left"
+      ></a-text>
     </a-marker>
 
     <a-marker type="pattern" url="exit.patt" marker-status="name: 非常口">
-      <a-box position="0 0.5 0" scale="1 1 1" color="blue"></a-box>
       <a-entity
         gltf-model="#character"
-        scale="0.5 0.5 0.5"
-        position="0 5 0"
+        scale="1.5 1.5 1.5"
+        position="0 2 0"
         rotation="0 0 0"
         animation-mixer="loop: repeat"
       ></a-entity>
+      <a-text
+        value="ちょっと\nストレッチ\nしていこ！"
+        position="2 3 0"
+        color="#ffffff"
+        width="5"
+        align="left"
+      ></a-text>
     </a-marker>
 
     <a-entity camera></a-entity>
