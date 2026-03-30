@@ -40,6 +40,23 @@
       white-space: nowrap;
     }
 
+    /* AR上に重ねるGLBビューア */
+    #ar-model-container {
+      display: none;
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -60%);
+      width: 300px; height: 400px;
+      z-index: 500;
+      pointer-events: none;
+    }
+    #ar-model-container.active { display: block; }
+    #ar-model-scene {
+      width: 100%; height: 100%;
+      background: transparent !important;
+    }
+
+    /* オーバーレイ */
     #exercise-overlay {
       display: none;
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -72,94 +89,75 @@
       line-height: 1.5;
     }
     .exercise-name {
-      font-size: 20px;
-      font-weight: bold;
-      color: #1a1a1a;
-      margin-bottom: 4px;
+      font-size: 20px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;
     }
     .exercise-name-en {
-      font-size: 12px;
-      color: #888;
-      margin-bottom: 16px;
+      font-size: 12px; color: #888; margin-bottom: 16px;
     }
-    .model-area {
+    .overlay-model {
       background: #e8f5e9;
       border-radius: 16px;
-      height: 150px;
+      height: 180px;
       margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 80px;
+      overflow: hidden;
     }
     .speech-bubble {
-      background: #00c853;
-      color: white;
-      border-radius: 16px;
-      padding: 14px 18px;
-      font-size: 14px;
-      font-weight: bold;
-      line-height: 1.7;
-      margin-bottom: 16px;
-      text-align: left;
+      background: #00c853; color: white;
+      border-radius: 16px; padding: 14px 18px;
+      font-size: 14px; font-weight: bold; line-height: 1.7;
+      margin-bottom: 16px; text-align: left;
     }
     .close-btn {
-      background: #eeeeee;
-      color: #333;
-      border: none;
-      border-radius: 12px;
-      padding: 14px 0;
-      font-size: 15px;
-      font-weight: bold;
-      cursor: pointer;
-      width: 100%;
+      background: #eeeeee; color: #333; border: none;
+      border-radius: 12px; padding: 14px 0;
+      font-size: 15px; font-weight: bold;
+      cursor: pointer; width: 100%;
       -webkit-tap-highlight-color: transparent;
     }
   </style>
   <script>
     const MODEL_URL = 'https://teachablemachine.withgoogle.com/models/x5wEdZGP7/';
-    let model, webcamEl, isRunning = false;
-    let exitDetected = false;
+    let model;
 
     async function initTM() {
-      const modelURL = MODEL_URL + 'model.json';
-      const metadataURL = MODEL_URL + 'metadata.json';
-      model = await tmImage.load(modelURL, metadataURL);
-
-      // カメラ映像をa-sceneのvideoから取得
-      await predict();
+      try {
+        model = await tmImage.load(MODEL_URL + 'model.json', MODEL_URL + 'metadata.json');
+        document.getElementById('confidence').textContent = 'モデル準備完了 - カメラを向けてください';
+        predict();
+      } catch(e) {
+        document.getElementById('confidence').textContent = 'モデル読み込みエラー';
+      }
     }
 
     async function predict() {
       if (!model) return;
-
-      // a-sceneのvideo要素を取得
       const video = document.querySelector('video');
       if (!video || video.readyState < 2) {
         setTimeout(predict, 500);
         return;
       }
+      try {
+        const prediction = await model.predict(video);
+        // 最も確率の高いクラスを取得
+        const top = prediction.reduce((a, b) => a.probability > b.probability ? a : b);
+        const isExit = top.className === 'Class 1' && top.probability > 0.7;
 
-      const prediction = await model.predict(video);
-      const exitClass = prediction.find(p => p.className === 'Class 1' || p.className.includes('exit') || p.className.includes('Exit'));
-      const confidence = exitClass ? exitClass.probability : prediction[0].probability;
-      const label = exitClass ? exitClass.className : prediction[0].className;
+        document.getElementById('confidence').textContent =
+          `${top.className}: ${Math.round(top.probability * 100)}%`;
 
-      document.getElementById('confidence').textContent =
-        `認識: ${label} (${Math.round(confidence * 100)}%)`;
-
-      if (exitClass && exitClass.probability > 0.7) {
-        exitDetected = true;
         const statusEl = document.getElementById('status');
-        statusEl.textContent = '✅ 非常口 認識中　→　タップ';
-        statusEl.className = 'found';
-      } else {
-        exitDetected = false;
-        const statusEl = document.getElementById('status');
-        statusEl.textContent = '🔍 非常口にカメラを向けてください';
-        statusEl.className = '';
-      }
+        const modelContainer = document.getElementById('ar-model-container');
 
+        if (isExit) {
+          statusEl.textContent = '✅ 非常口 認識中　→　タップ';
+          statusEl.className = 'found';
+          modelContainer.classList.add('active');
+        } else {
+          statusEl.textContent = '🔍 非常口にカメラを向けてください';
+          statusEl.className = '';
+          modelContainer.classList.remove('active');
+        }
+      } catch(e) {}
       setTimeout(predict, 500);
     }
 
@@ -171,7 +169,6 @@
     }
 
     window.addEventListener('load', () => {
-      // a-sceneのカメラ起動後にTM初期化
       setTimeout(initTM, 3000);
     });
   </script>
@@ -184,12 +181,61 @@
     🔍 非常口にカメラを向けてください
   </button>
 
+  <!-- AR上に重ねるGLBモデル -->
+  <div id="ar-model-container">
+    <a-scene
+      id="ar-model-scene"
+      embedded
+      vr-mode-ui="enabled: false"
+      renderer="antialias: true; alpha: true;"
+      background="transparent: true"
+    >
+      <a-assets>
+        <a-asset-item id="char-ar" src="character.glb"></a-asset-item>
+      </a-assets>
+      <a-entity
+        gltf-model="#char-ar"
+        scale="0.8 0.8 0.8"
+        position="0 -0.5 -2.5"
+        rotation="0 0 0"
+        animation-mixer="loop: repeat"
+      ></a-entity>
+      <a-light type="ambient" intensity="2"></a-light>
+      <a-camera look-controls="enabled:false" wasd-controls="enabled:false" position="0 1 0"></a-camera>
+    </a-scene>
+  </div>
+
+  <!-- オーバーレイ -->
   <div id="exercise-overlay">
     <div class="exercise-card">
       <div class="acquired-badge">🎉 エクササイズ01：非常口の退勤後　を採取しました！</div>
       <div class="exercise-name">ベントニーシットアップ</div>
       <div class="exercise-name-en">Bent Knee Sit-Up</div>
-      <div class="model-area">🏃</div>
+
+      <!-- オーバーレイ内のGLB -->
+      <div class="overlay-model">
+        <a-scene
+          embedded
+          vr-mode-ui="enabled: false"
+          renderer="antialias: true; alpha: true;"
+          background="transparent: true"
+          style="width:100%;height:180px;"
+        >
+          <a-assets>
+            <a-asset-item id="char-overlay" src="character.glb"></a-asset-item>
+          </a-assets>
+          <a-entity
+            gltf-model="#char-overlay"
+            scale="0.8 0.8 0.8"
+            position="0 -0.5 -2.5"
+            rotation="0 0 0"
+            animation-mixer="loop: repeat"
+          ></a-entity>
+          <a-light type="ambient" intensity="2"></a-light>
+          <a-camera look-controls="enabled:false" wasd-controls="enabled:false" position="0 1 0"></a-camera>
+        </a-scene>
+      </div>
+
       <div class="speech-bubble">
         あの姿勢をずっと続けるために、<br>体幹を鍛えております。
       </div>
@@ -199,26 +245,13 @@
     </div>
   </div>
 
+  <!-- メインAR -->
   <a-scene
     embedded
     arjs="sourceType: webcam; debugUIEnabled: false;"
     renderer="logarithmicDepthBuffer: true; antialias: true;"
     vr-mode-ui="enabled: false"
   >
-    <a-assets>
-      <a-asset-item id="character" src="character.glb"></a-asset-item>
-    </a-assets>
-
-    <a-marker preset="hiro">
-      <a-entity
-        gltf-model="#character"
-        scale="3 3 3"
-        position="0 4 0"
-        rotation="0 0 0"
-        animation-mixer="loop: repeat"
-      ></a-entity>
-    </a-marker>
-
     <a-entity camera></a-entity>
   </a-scene>
 </body>
