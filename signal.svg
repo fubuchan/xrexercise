@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200" width="100" height="200">
+  <!-- 緑の人シルエット（歩行者信号スタイル） -->
+  <g fill="#00e000">
+    <!-- 頭 -->
+    <circle cx="50" cy="20" r="12"/>
+    <!-- 体 -->
+    <rect x="40" y="35" width="20" height="45" rx="5"/>
+    <!-- 左腕（上に伸びている） -->
+    <line x1="40" y1="45" x2="15" y2="20" stroke="#00e000" stroke-width="8" stroke-linecap="round"/>
+    <!-- 右腕（横に伸びている） -->
+    <line x1="60" y1="45" x2="85" y2="55" stroke="#00e000" stroke-width="8" stroke-linecap="round"/>
+    <!-- 左足 -->
+    <line x1="45" y1="80" x2="35" y2="120" stroke="#00e000" stroke-width="8" stroke-linecap="round"/>
+    <!-- 右足（曲げている） -->
+    <line x1="55" y1="80" x2="70" y2="110" stroke="#00e000" stroke-width="8" stroke-linecap="round"/>
+    <line x1="70" y1="110" x2="55" y2="130" stroke="#00e000" stroke-width="8" stroke-linecap="round"/>
+  </g>
+</svg>

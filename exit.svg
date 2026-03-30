@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200" width="100" height="200">
+  <!-- 非常口スタイルの人（走りながらストレッチ） -->
+  <g fill="#00e000">
+    <!-- 頭 -->
+    <circle cx="50" cy="20" r="12"/>
+    <!-- 体（前傾） -->
+    <rect x="38" y="35" width="18" height="40" rx="5" transform="rotate(-15 50 55)"/>
+    <!-- 左腕（前に伸びている） -->
+    <line x1="42" y1="45" x2="20" y2="60" stroke="#00e000" stroke-width="8" stroke-linecap="round"/>
+    <!-- 右腕（後ろ） -->
+    <line x1="58" y1="45" x2="78" y2="35" stroke="#00e000" stroke-width="8" stroke-linecap="round"/>
+    <!-- 左足（前に出している） -->
+    <line x1="45" y1="75" x2="25" y2="110" stroke="#00e000" stroke-width="8" stroke-linecap="round"/>
+    <line x1="25" y1="110" x2="20" y2="140" stroke="#00e000" stroke-width="8" stroke-linecap="round"/>
+    <!-- 右足（後ろに蹴り上げ） -->
+    <line x1="55" y1="75" x2="75" y2="95" stroke="#00e000" stroke-width="8" stroke-linecap="round"/>
+    <line x1="75" y1="95" x2="90" y2="75" stroke="#00e000" stroke-width="8" stroke-linecap="round"/>
+  </g>
+</svg>

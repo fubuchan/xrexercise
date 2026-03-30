@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XRエクササイズ</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.4.0/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; background: black; }
+    #ui {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      font-family: 'Helvetica Neue', sans-serif;
+      font-size: 14px;
+      text-align: center;
+      background: rgba(0,0,0,0.6);
+      padding: 10px 20px;
+      border-radius: 20px;
+      z-index: 999;
+      pointer-events: none;
+    }
+    #title {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      font-family: 'Helvetica Neue', sans-serif;
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+      background: rgba(255,80,80,0.85);
+      padding: 8px 24px;
+      border-radius: 20px;
+      z-index: 999;
+      pointer-events: none;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+  <div id="title">XR エクササイズ</div>
+  <div id="ui">マーカーにカメラを向けてください</div>
+
+  <a-scene
+    embedded
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+    renderer="logarithmicDepthBuffer: true; antialias: true;"
+    vr-mode-ui="enabled: false"
+  >
+
+    <!-- 歩行者信号マーカー（Hiro） -->
+    <a-marker preset="hiro" id="marker-signal">
+      <a-entity
+        id="signal-entity"
+        position="0 0.5 0"
+        scale="1.5 1.5 1.5"
+        geometry="primitive: plane; width: 1; height: 1.8"
+        material="color: #27ae60; opacity: 0.0"
+      >
+      </a-entity>
+      <!-- 信号の人 SVGをテクスチャとして表示 -->
+      <a-image
+        id="signal-img"
+        src="#signal-svg"
+        width="1.2"
+        height="2"
+        position="0 1 0"
+        animation__stretch="property: rotation; from: 0 0 -15; to: 0 0 15; dur: 600; easing: easeInOutSine; loop: true; dir: alternate"
+      ></a-image>
+      <!-- セリフ -->
+      <a-text
+        value="立ちっぱで\n疲れるわ！\nちょっと伸ばそ。"
+        position="0.8 1.8 0"
+        color="white"
+        background-color="#27ae60"
+        width="3"
+        align="left"
+        font="kelsonsans"
+      ></a-text>
+    </a-marker>
+
+    <!-- 非常口マーカー（kanji） -->
+    <a-marker preset="kanji" id="marker-exit">
+      <a-image
+        id="exit-img"
+        src="#exit-svg"
+        width="1.2"
+        height="2"
+        position="0 1 0"
+        animation__run="property: position; from: -0.3 1 0; to: 0.3 1 0; dur: 400; easing: easeInOutSine; loop: true; dir: alternate"
+        animation__bob="property: rotation; from: 0 0 -10; to: 0 0 10; dur: 400; easing: easeInOutSine; loop: true; dir: alternate"
+      ></a-image>
+      <a-text
+        value="ちょっと\nストレッチ\nしていこ！"
+        position="0.8 1.8 0"
+        color="white"
+        background-color="#27ae60"
+        width="3"
+        align="left"
+        font="kelsonsans"
+      ></a-text>
+    </a-marker>
+
+    <a-entity camera></a-entity>
+
+    <!-- SVGアセット -->
+    <a-assets>
+      <!-- 歩行者信号の人（ストレッチポーズ） -->
+      <img id="signal-svg" src="signal.svg">
+      <!-- 非常口の人 -->
+      <img id="exit-svg" src="exit.svg">
+    </a-assets>
+
+  </a-scene>
+</body>
+</html>
