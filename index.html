@@ -28,7 +28,6 @@
       border: none; outline: none; transition: background 0.3s;
     }
     #status.found { background: rgba(0,180,80,0.95); color: white; }
-
     #confidence {
       position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
       font-size: 13px; color: white;
@@ -36,7 +35,6 @@
       border-radius: 12px; z-index: 9999; pointer-events: none; white-space: nowrap;
     }
 
-    /* 認識中のmodel-viewer（AR映像の上に重ねる） */
     #ar-model-viewer {
       display: none;
       position: fixed;
@@ -45,23 +43,28 @@
       width: 260px; height: 360px;
       z-index: 500;
       pointer-events: none;
-      background: transparent;
       --progress-bar-color: transparent;
+      background-color: transparent;
     }
     #ar-model-viewer.active { display: block; }
 
-    /* オーバーレイ */
     #exercise-overlay {
-      display: none;
+      visibility: hidden;
+      opacity: 0;
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.85);
       z-index: 10000;
+      display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 20px;
+      transition: opacity 0.2s;
     }
-    #exercise-overlay.active { display: flex; }
+    #exercise-overlay.active {
+      visibility: visible;
+      opacity: 1;
+    }
 
     .exercise-card {
       background: white; border-radius: 24px;
@@ -77,10 +80,10 @@
 
     #overlay-model-viewer {
       width: 100%; height: 180px;
-      background-color: #e8f5e9;
       border-radius: 16px;
       margin-bottom: 16px;
       --progress-bar-color: transparent;
+      background-color: #e8f5e9;
     }
 
     .speech-bubble {
@@ -135,6 +138,9 @@
 
     function openOverlay() {
       document.getElementById('exercise-overlay').classList.add('active');
+      // model-viewerを再描画させる
+      const mv = document.getElementById('overlay-model-viewer');
+      mv.dismissPoster && mv.dismissPoster();
     }
     function closeOverlay() {
       document.getElementById('exercise-overlay').classList.remove('active');
@@ -149,7 +155,7 @@
   <div id="title">XR エクササイズ</div>
   <div id="confidence">モデル読み込み中...</div>
 
-  <!-- 認識中のmodel-viewer -->
+  <!-- 認識中のmodel-viewer：ライト強化・環境マップで緑を出す -->
   <model-viewer
     id="ar-model-viewer"
     src="character.glb"
@@ -157,14 +163,17 @@
     camera-controls="false"
     disable-zoom
     interaction-prompt="none"
-    background-color="transparent"
+    environment-image="neutral"
+    exposure="2"
+    shadow-intensity="0"
+    style="--progress-bar-color: transparent; background: transparent;"
   ></model-viewer>
 
   <button id="status" ontouchend="openOverlay()" onclick="openOverlay()">
     🔍 非常口にカメラを向けてください
   </button>
 
-  <!-- オーバーレイ -->
+  <!-- オーバーレイ：display:noneではなくvisibility:hiddenで常にDOMに存在させる -->
   <div id="exercise-overlay">
     <div class="exercise-card">
       <div class="acquired-badge">🎉 エクササイズ01：非常口の退勤後　を採取しました！</div>
@@ -177,6 +186,10 @@
         camera-controls="false"
         disable-zoom
         interaction-prompt="none"
+        environment-image="neutral"
+        exposure="2"
+        shadow-intensity="0"
+        style="--progress-bar-color: transparent;"
       ></model-viewer>
       <div class="speech-bubble">
         あの姿勢をずっと続けるために、<br>体幹を鍛えております。
@@ -185,7 +198,6 @@
     </div>
   </div>
 
-  <!-- メインAR（カメラ映像のみ） -->
   <a-scene
     embedded
     arjs="sourceType: webcam; debugUIEnabled: false;"
