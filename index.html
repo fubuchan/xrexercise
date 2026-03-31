@@ -128,7 +128,7 @@
           statusEl.className = 'found';
           arViewer.classList.add('active');
         } else {
-          statusEl.textContent = '🔍 看板の生き物にカメラを向けてください';
+          statusEl.textContent = '🔍 非常口にカメラを向けてください';
           statusEl.className = '';
           arViewer.classList.remove('active');
         }
@@ -159,12 +159,12 @@
   <model-viewer
     id="ar-model-viewer"
     src="character.glb"
+    orientation="0deg 90deg 0deg"
     autoplay
     camera-controls="false"
     disable-zoom
     interaction-prompt="none"
-        camera-orbit="0deg 90deg 2.5m"
-    environment-image="neutral"
+            environment-image="neutral"
     exposure="2"
     shadow-intensity="0"
     style="--progress-bar-color: transparent; background: transparent;"
@@ -183,19 +183,18 @@
       <model-viewer
         id="overlay-model-viewer"
         src="character.glb"
+        orientation="0deg 90deg 0deg"
         autoplay
         camera-controls="false"
         disable-zoom
         interaction-prompt="none"
-        camera-orbit="0deg 90deg 2.5m"
-        camera-orbit="0deg 90deg 2.5m"
-        environment-image="neutral"
+                        environment-image="neutral"
         exposure="2"
         shadow-intensity="0"
         style="--progress-bar-color: transparent;"
       ></model-viewer>
       <div class="speech-bubble">
-        非常口の姿勢を一日中続けるため、<br>体幹を鍛えております。
+        あの姿勢をずっと続けるために、<br>体幹を鍛えております。
       </div>
       <button class="close-btn" ontouchend="closeOverlay()" onclick="closeOverlay()">閉じる</button>
     </div>
